@@ -1,0 +1,40 @@
+/*---------------------------------------------------------------------------------------------
+ *  Copyright (c) Microsoft Corporation. All rights reserved.
+ *  Licensed under the MIT License. See License.txt in the project root for license information.
+ *--------------------------------------------------------------------------------------------*/
+
+/**
+ * Tabs Container Styles
+ */
+
+.tabs-container {
+	display: flex;
+	flex-direction: column;
+	height: 100%;
+	width: 100%;
+}
+
+.tabs-container[data-orientation="vertical"] {
+	flex-direction: row;
+}
+
+/* When vertical, the tab list should be on the side */
+.tabs-container[data-orientation="vertical"] .editor-tabs {
+	flex-direction: column;
+	width: auto;
+	height: 100%;
+}
+
+.tabs-container[data-orientation="vertical"] .editor-tabs-container {
+	flex-direction: column;
+	height: auto;
+	width: var(--editor-tab-height);
+}
+
+.tabs-container[data-orientation="vertical"] .editor-tab {
+	width: 100%;
+	height: auto;
+	min-height: var(--editor-tab-height);
+	writing-mode: vertical-rl;
+	text-orientation: mixed;
+}

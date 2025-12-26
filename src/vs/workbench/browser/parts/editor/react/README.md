@@ -13,6 +13,7 @@ A React component that replicates VS Code's editor tabs functionality, extracted
 - **Dirty state indicators**: Visual feedback for unsaved changes
 - **Mouse wheel switching**: Optional scroll-to-switch-tabs behavior
 - **Accessible**: ARIA attributes and keyboard support
+- **Declarative API**: React-tabs style `<Tabs>`, `<TabList>`, `<Tab>`, `<TabPanel>` components
 
 ## Installation
 
@@ -27,8 +28,15 @@ A React component that replicates VS Code's editor tabs functionality, extracted
 
    ```
    src/components/EditorTabs/
-   ├── EditorTabs.tsx
+   ├── EditorTabs.tsx      # Low-level component
    ├── EditorTabs.css
+   ├── Tabs.tsx            # High-level container
+   ├── Tabs.css
+   ├── Tab.tsx             # Declarative tab definition
+   ├── TabList.tsx         # Tab bar wrapper
+   ├── TabPanel.tsx        # Content panel
+   ├── TabPanel.css
+   ├── TabContext.tsx      # Shared context
    ├── types.ts
    └── index.ts
    ```
@@ -44,11 +52,302 @@ A React component that replicates VS Code's editor tabs functionality, extracted
 3. **Import and use** the component:
 
    ```tsx
+   // Declarative API (recommended)
+   import { Tabs, TabList, Tab, TabPanel } from './components/EditorTabs';
+
+   // Or low-level API
    import { EditorTabs } from './components/EditorTabs';
-   import type { EditorTab } from './components/EditorTabs';
    ```
 
-## Basic Usage
+---
+
+## Declarative API (Recommended)
+
+The declarative API follows the [react-tabs](https://github.com/reactjs/react-tabs) pattern, where tabs manage their own panels automatically.
+
+### Quick Start
+
+```tsx
+import { Tabs, TabList, Tab, TabPanel } from './components/EditorTabs';
+
+function App() {
+  return (
+    <Tabs defaultActiveTabId="tab1">
+      <TabList>
+        <Tab id="tab1" name="index.ts" />
+        <Tab id="tab2" name="App.tsx" isDirty />
+        <Tab id="tab3" name="config.json" isPinned />
+      </TabList>
+
+      <TabPanel tabId="tab1">
+        <p>Content for index.ts</p>
+      </TabPanel>
+      <TabPanel tabId="tab2">
+        <p>Content for App.tsx</p>
+      </TabPanel>
+      <TabPanel tabId="tab3">
+        <p>Content for config.json</p>
+      </TabPanel>
+    </Tabs>
+  );
+}
+```
+
+### Controlled vs Uncontrolled
+
+#### Uncontrolled (Component Manages State)
+
+```tsx
+<Tabs defaultActiveTabId="tab1">
+  <TabList>
+    <Tab id="tab1" name="First" />
+    <Tab id="tab2" name="Second" />
+  </TabList>
+  <TabPanel tabId="tab1">First content</TabPanel>
+  <TabPanel tabId="tab2">Second content</TabPanel>
+</Tabs>
+```
+
+#### Controlled (You Manage State)
+
+```tsx
+const [activeTab, setActiveTab] = useState('tab1');
+
+<Tabs activeTabId={activeTab} onTabChange={setActiveTab}>
+  <TabList>
+    <Tab id="tab1" name="First" />
+    <Tab id="tab2" name="Second" />
+  </TabList>
+  <TabPanel tabId="tab1">First content</TabPanel>
+  <TabPanel tabId="tab2">Second content</TabPanel>
+</Tabs>
+```
+
+### Component Reference
+
+#### `<Tabs>`
+
+The main container component that provides context for all child components.
+
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| `defaultActiveTabId` | `string` | - | Initial active tab (uncontrolled) |
+| `activeTabId` | `string` | - | Active tab ID (controlled) |
+| `defaultSelectedTabIds` | `string[]` | `[]` | Initial selected tabs (uncontrolled) |
+| `selectedTabIds` | `string[]` | - | Selected tab IDs (controlled) |
+| `isGroupFocused` | `boolean` | `true` | Whether the tab group has focus |
+| `options` | `EditorTabsOptions` | `{}` | Tab bar configuration |
+| `theme` | `EditorTabsTheme` | - | Theme colors |
+| `onTabChange` | `(tabId: string) => void` | - | Called when active tab changes |
+| `onTabClose` | `(tabId: string) => void` | - | Called when a tab is closed |
+| `onSelectionChange` | `(tabIds: string[]) => void` | - | Called when selection changes |
+| `onTabDirtyChange` | `(tabId: string, isDirty: boolean) => void` | - | Called when dirty state changes |
+| `onTabPinChange` | `(tabId: string, isPinned: boolean) => void` | - | Called when pin state changes |
+| `activateAdjacentOnClose` | `boolean` | `true` | Activate next tab when closing active |
+| `orientation` | `'horizontal' \| 'vertical'` | `'horizontal'` | Tab orientation |
+| `className` | `string` | - | Additional CSS class |
+
+#### `<TabList>`
+
+Container for `<Tab>` components. Renders the visual tab bar.
+
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| `children` | `ReactNode` | required | `<Tab>` components |
+| `className` | `string` | - | Additional CSS class |
+| `ariaLabel` | `string` | `'Editor tabs'` | Accessible label |
+| `onTabDoubleClick` | `(tabId: string) => void` | - | Tab double-click handler |
+| `onTabContextMenu` | `(tabId: string, event: MouseEvent) => void` | - | Context menu handler |
+| `onEmptyAreaDoubleClick` | `() => void` | - | Empty area double-click |
+| `onTabReorder` | `(tabId: string, from: number, to: number) => void` | - | Reorder handler |
+| `onExternalDrop` | `(event: DragEvent, index: number) => void` | - | External drop handler |
+
+#### `<Tab>`
+
+Declarative tab definition. Does not render visible content.
+
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| `id` | `string` | required | Unique tab identifier |
+| `name` | `string` | required | Display name |
+| `description` | `string` | - | Secondary text |
+| `title` | `string` | - | Tooltip text |
+| `icon` | `string` | - | Icon class or URL |
+| `isDirty` | `boolean` | `false` | Has unsaved changes |
+| `isPinned` | `boolean` | `false` | Is pinned |
+| `isSticky` | `boolean` | `false` | Stays at beginning |
+| `isPreview` | `boolean` | `false` | Preview mode (italic) |
+| `disabled` | `boolean` | `false` | Cannot be selected |
+
+#### `<TabPanel>`
+
+Content panel associated with a tab.
+
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| `tabId` | `string` | required | Associated tab ID |
+| `children` | `ReactNode` | required | Panel content |
+| `className` | `string` | - | Additional CSS class |
+| `forceMount` | `boolean` | `false` | Always keep in DOM (hidden when inactive) |
+| `keepMounted` | `boolean` | `false` | Keep mounted after first render |
+| `render` | `() => ReactNode` | - | Lazy render function |
+
+### Hooks
+
+Access tab state from any component inside `<Tabs>`:
+
+```tsx
+import { useTabsContext, useIsActiveTab, useIsSelectedTab } from './components/EditorTabs';
+
+function MyComponent() {
+  const { activeTabId, selectTab, closeTab, setTabDirty } = useTabsContext();
+  const isActive = useIsActiveTab('tab1');
+  const isSelected = useIsSelectedTab('tab1');
+
+  return (
+    <button onClick={() => setTabDirty('tab1', true)}>
+      Mark as dirty
+    </button>
+  );
+}
+```
+
+#### `useTabsContext()`
+
+Returns the full context value:
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `activeTabId` | `string \| undefined` | Currently active tab |
+| `selectedTabIds` | `string[]` | Selected tab IDs |
+| `isGroupFocused` | `boolean` | Whether group is focused |
+| `selectTab` | `(tabId: string) => void` | Select a tab |
+| `closeTab` | `(tabId: string) => void` | Close a tab |
+| `setSelectedTabs` | `(tabIds: string[]) => void` | Update selection |
+| `setTabDirty` | `(tabId: string, isDirty: boolean) => void` | Set dirty state |
+| `setTabPinned` | `(tabId: string, isPinned: boolean) => void` | Set pinned state |
+| `options` | `EditorTabsOptions` | Configuration options |
+| `theme` | `EditorTabsTheme \| undefined` | Theme colors |
+
+#### `useIsActiveTab(tabId: string)`
+
+Returns `true` if the specified tab is active.
+
+#### `useIsSelectedTab(tabId: string)`
+
+Returns `true` if the specified tab is selected.
+
+### Examples
+
+#### Dynamic Tabs
+
+```tsx
+function DynamicTabs() {
+  const [tabs, setTabs] = useState([
+    { id: '1', name: 'Tab 1', content: 'Content 1' },
+  ]);
+  const [counter, setCounter] = useState(2);
+
+  const addTab = () => {
+    const id = String(counter);
+    setTabs([...tabs, { id, name: `Tab ${id}`, content: `Content ${id}` }]);
+    setCounter(counter + 1);
+  };
+
+  const removeTab = (tabId: string) => {
+    setTabs(tabs.filter(t => t.id !== tabId));
+  };
+
+  return (
+    <Tabs defaultActiveTabId="1" onTabClose={removeTab}>
+      <TabList onEmptyAreaDoubleClick={addTab}>
+        {tabs.map(tab => (
+          <Tab key={tab.id} id={tab.id} name={tab.name} />
+        ))}
+      </TabList>
+
+      {tabs.map(tab => (
+        <TabPanel key={tab.id} tabId={tab.id}>
+          {tab.content}
+        </TabPanel>
+      ))}
+    </Tabs>
+  );
+}
+```
+
+#### Lazy Loading Panels
+
+```tsx
+<Tabs defaultActiveTabId="tab1">
+  <TabList>
+    <Tab id="tab1" name="Light" />
+    <Tab id="tab2" name="Heavy" />
+  </TabList>
+
+  <TabPanel tabId="tab1">
+    <p>This loads immediately</p>
+  </TabPanel>
+
+  <TabPanel tabId="tab2" render={() => <HeavyComponent />}>
+    {/* Only rendered when tab2 is active */}
+  </TabPanel>
+</Tabs>
+```
+
+#### Preserving Panel State
+
+```tsx
+<Tabs defaultActiveTabId="tab1">
+  <TabList>
+    <Tab id="tab1" name="Form" />
+    <Tab id="tab2" name="Preview" />
+  </TabList>
+
+  {/* Form state is preserved when switching tabs */}
+  <TabPanel tabId="tab1" keepMounted>
+    <FormWithState />
+  </TabPanel>
+
+  <TabPanel tabId="tab2">
+    <Preview />
+  </TabPanel>
+</Tabs>
+```
+
+#### With Theming
+
+```tsx
+<Tabs
+  defaultActiveTabId="tab1"
+  theme={{
+    tabActiveBackground: '#0d1117',
+    tabInactiveBackground: '#161b22',
+    tabActiveForeground: '#c9d1d9',
+    tabActiveBorderTop: '#58a6ff',
+  }}
+  options={{
+    tabSizing: 'shrink',
+    tabHeight: 'compact',
+  }}
+>
+  <TabList>
+    <Tab id="tab1" name="main.rs" icon="rust-icon" />
+    <Tab id="tab2" name="Cargo.toml" icon="toml-icon" isDirty />
+  </TabList>
+
+  <TabPanel tabId="tab1">Rust code here</TabPanel>
+  <TabPanel tabId="tab2">TOML config here</TabPanel>
+</Tabs>
+```
+
+---
+
+## Low-Level API
+
+For more control, use the `EditorTabs` component directly. This requires you to manage state manually.
+
+### Basic Usage
 
 ```tsx
 import React, { useState } from 'react';
@@ -83,8 +382,6 @@ function App() {
   );
 }
 ```
-
-## API Reference
 
 ### EditorTabsProps
 
@@ -147,6 +444,8 @@ function App() {
 | `onExternalDrop` | `(event: React.DragEvent, targetIndex: number) => void` | Called for external drops |
 | `onTabPin` | `(tabId: string, isPinned: boolean) => void` | Called when tab is pinned/unpinned |
 
+---
+
 ## Tab Sizing Modes
 
 ### `fit` (Fixed Width)
@@ -182,6 +481,8 @@ Tabs have configurable min/max widths and share space equally.
   }}
 />
 ```
+
+---
 
 ## Theming
 
@@ -243,111 +544,7 @@ Pass theme colors directly via the `theme` prop:
 | `tabDragAndDropBorder` | `--tab-drag-and-drop-border` | Drop indicator color |
 | `editorGroupHeaderTabsBackground` | `--editor-group-header-tabs-background` | Tab bar background |
 
-## Examples
-
-### With Icons
-
-```tsx
-const tabs: EditorTab[] = [
-  {
-    id: '1',
-    name: 'index.ts',
-    icon: 'typescript-icon', // CSS class
-  },
-  {
-    id: '2',
-    name: 'logo.png',
-    icon: 'https://example.com/image-icon.svg', // URL
-  },
-];
-
-<EditorTabs tabs={tabs} />
-```
-
-### With Sticky/Pinned Tabs
-
-```tsx
-const tabs: EditorTab[] = [
-  { id: '1', name: 'config.json', isSticky: true },
-  { id: '2', name: 'README.md', isSticky: true },
-  { id: '3', name: 'index.ts' },
-];
-
-<EditorTabs tabs={tabs} />
-```
-
-### With Multi-Selection
-
-```tsx
-const [selectedTabIds, setSelectedTabIds] = useState<string[]>([]);
-
-<EditorTabs
-  tabs={tabs}
-  activeTabId={activeTabId}
-  selectedTabIds={selectedTabIds}
-  callbacks={{
-    onTabSelect: setActiveTabId,
-    onTabMultiSelect: setSelectedTabIds,
-  }}
-/>
-```
-
-### With Drag and Drop Reordering
-
-```tsx
-const handleReorder = (tabId: string, fromIndex: number, toIndex: number) => {
-  setTabs(prev => {
-    const newTabs = [...prev];
-    const [removed] = newTabs.splice(fromIndex, 1);
-    newTabs.splice(toIndex, 0, removed);
-    return newTabs;
-  });
-};
-
-<EditorTabs
-  tabs={tabs}
-  callbacks={{
-    onTabReorder: handleReorder,
-  }}
-/>
-```
-
-### With Context Menu
-
-```tsx
-const handleContextMenu = (tabId: string, event: React.MouseEvent) => {
-  event.preventDefault();
-  // Show your context menu at event.clientX, event.clientY
-  showContextMenu({
-    x: event.clientX,
-    y: event.clientY,
-    items: [
-      { label: 'Close', onClick: () => closeTab(tabId) },
-      { label: 'Close Others', onClick: () => closeOtherTabs(tabId) },
-      { label: 'Close All', onClick: () => closeAllTabs() },
-    ],
-  });
-};
-
-<EditorTabs
-  tabs={tabs}
-  callbacks={{
-    onTabContextMenu: handleContextMenu,
-  }}
-/>
-```
-
-### Compact Mode
-
-```tsx
-<EditorTabs
-  tabs={tabs}
-  options={{
-    tabHeight: 'compact',
-    tabCloseButton: 'off',
-  }}
-/>
-```
+---
 
 ## Keyboard Navigation
 
@@ -360,6 +557,8 @@ const handleContextMenu = (tabId: string, event: React.MouseEvent) => {
 | `Enter` / `Space` | Select focused tab |
 | `Shift + F10` | Open context menu |
 
+---
+
 ## Browser Support
 
 - Chrome 80+
@@ -367,14 +566,20 @@ const handleContextMenu = (tabId: string, event: React.MouseEvent) => {
 - Safari 13+
 - Edge 80+
 
+---
+
 ## Accessibility
 
 The component implements WAI-ARIA tab pattern:
 - `role="tablist"` on container
 - `role="tab"` on each tab
+- `role="tabpanel"` on each panel
 - `aria-selected` for active state
+- `aria-labelledby` linking panels to tabs
 - `tabIndex` management for keyboard navigation
 - High contrast mode support via `@media (forced-colors: active)`
+
+---
 
 ## License
 

@@ -1,0 +1,48 @@
+/*---------------------------------------------------------------------------------------------
+ *  Copyright (c) Microsoft Corporation. All rights reserved.
+ *  Licensed under the MIT License. See License.txt in the project root for license information.
+ *--------------------------------------------------------------------------------------------*/
+
+/**
+ * TabPanel Styles
+ */
+
+.tab-panel {
+	flex: 1;
+	overflow: auto;
+	outline: none;
+}
+
+.tab-panel-active {
+	display: block;
+}
+
+.tab-panel-inactive {
+	display: none;
+}
+
+.tab-panel[hidden] {
+	display: none !important;
+}
+
+/* Focus styles for accessibility */
+.tab-panel:focus-visible {
+	outline: 2px solid var(--tab-active-border-top, #007acc);
+	outline-offset: -2px;
+}
+
+/* Animation for panel transitions (optional) */
+@media (prefers-reduced-motion: no-preference) {
+	.tab-panel {
+		animation: tabPanelFadeIn 0.15s ease-out;
+	}
+
+	@keyframes tabPanelFadeIn {
+		from {
+			opacity: 0.8;
+		}
+		to {
+			opacity: 1;
+		}
+	}
+}
