@@ -1,0 +1,518 @@
+/*---------------------------------------------------------------------------------------------
+ *  Copyright (c) Microsoft Corporation. All rights reserved.
+ *  Licensed under the MIT License. See License.txt in the project root for license information.
+ *--------------------------------------------------------------------------------------------*/
+
+/*
+ * Editor Tabs React Component Styles
+ * Based on VS Code's multiEditortabscontrol.css
+ *
+ * Z-index hierarchy:
+ * 12 - Drag and drop overlay
+ * 11 - Scrollbar / tabs dnd border
+ * 10 - Active tab border-bottom
+ * 9  - Tabs, title border bottom
+ * 8  - Sticky tabs
+ * 6  - Active/dirty tab border top
+ * 0  - Regular tab
+ */
+
+/* CSS Custom Properties (Theme Variables) */
+.editor-tabs {
+	--editor-tab-height: 35px;
+	--editor-tab-height-compact: 22px;
+
+	/* Default theme colors - can be overridden via inline styles or CSS variables */
+	--tab-active-background: #1e1e1e;
+	--tab-inactive-background: #2d2d2d;
+	--tab-unfocused-active-background: #2d2d2d;
+	--tab-unfocused-inactive-background: #2d2d2d;
+	--tab-active-foreground: #ffffff;
+	--tab-inactive-foreground: #969696;
+	--tab-unfocused-active-foreground: #969696;
+	--tab-unfocused-inactive-foreground: #969696;
+	--tab-border: #252526;
+	--tab-active-border-top: transparent;
+	--tab-active-border: transparent;
+	--tab-active-modified-border: #007acc;
+	--tab-inactive-modified-border: #3b6ea8;
+	--tab-hover-background: #383838;
+	--tab-hover-border: transparent;
+	--tab-hover-foreground: #ffffff;
+	--tab-last-pinned-border: #585858;
+	--tab-selected-background: #383838;
+	--tab-selected-foreground: #ffffff;
+	--tab-drag-and-drop-border: #007acc;
+	--editor-group-header-tabs-background: #252526;
+	--editor-group-header-tabs-border: transparent;
+}
+
+/* Tabs Container */
+.editor-tabs {
+	display: flex;
+	position: relative;
+	background-color: var(--editor-group-header-tabs-background);
+	height: var(--editor-tab-height);
+	user-select: none;
+}
+
+.editor-tabs.compact {
+	--editor-tab-height: var(--editor-tab-height-compact);
+}
+
+.editor-tabs-scrollable {
+	flex: 1;
+	overflow: hidden;
+	position: relative;
+}
+
+.editor-tabs-container {
+	display: flex;
+	height: var(--editor-tab-height);
+	overflow-x: auto;
+	overflow-y: hidden;
+	scrollbar-width: none; /* Firefox */
+}
+
+.editor-tabs-container::-webkit-scrollbar {
+	display: none; /* Chrome, Safari */
+}
+
+.editor-tabs-container.wrapping {
+	height: auto;
+	flex-wrap: wrap;
+}
+
+/* Scrollbar */
+.editor-tabs-scrollbar {
+	position: absolute;
+	bottom: 0;
+	left: 0;
+	right: 0;
+	height: 3px;
+	z-index: 11;
+}
+
+.editor-tabs-scrollbar.large {
+	height: 10px;
+}
+
+.editor-tabs-scrollbar-thumb {
+	background-color: rgba(121, 121, 121, 0.4);
+	border-radius: 3px;
+	height: 100%;
+	cursor: pointer;
+}
+
+.editor-tabs-scrollbar-thumb:hover {
+	background-color: rgba(121, 121, 121, 0.7);
+}
+
+/* Individual Tab */
+.editor-tab {
+	position: relative;
+	display: flex;
+	align-items: center;
+	white-space: nowrap;
+	cursor: pointer;
+	height: var(--editor-tab-height);
+	box-sizing: border-box;
+	padding-left: 10px;
+	outline-offset: -2px;
+	background-color: var(--tab-unfocused-inactive-background);
+	color: var(--tab-unfocused-inactive-foreground);
+	border-right: 1px solid var(--tab-border);
+}
+
+.editor-tab:focus {
+	outline: 1px solid var(--tab-active-border-top, #007acc);
+	outline-offset: -2px;
+}
+
+/* Tab states - unfocused group */
+.editor-tabs:not(.focused) .editor-tab {
+	background-color: var(--tab-unfocused-inactive-background);
+	color: var(--tab-unfocused-inactive-foreground);
+}
+
+.editor-tabs:not(.focused) .editor-tab.active {
+	background-color: var(--tab-unfocused-active-background);
+	color: var(--tab-unfocused-active-foreground);
+}
+
+/* Tab states - focused group */
+.editor-tabs.focused .editor-tab {
+	background-color: var(--tab-inactive-background);
+	color: var(--tab-inactive-foreground);
+}
+
+.editor-tabs.focused .editor-tab.active {
+	background-color: var(--tab-active-background);
+	color: var(--tab-active-foreground);
+}
+
+/* Selected tabs (multi-select) */
+.editor-tabs.focused .editor-tab.selected:not(.active) {
+	background-color: var(--tab-selected-background);
+	color: var(--tab-selected-foreground);
+}
+
+/* Tab hover states */
+.editor-tab:hover {
+	background-color: var(--tab-hover-background);
+	color: var(--tab-hover-foreground);
+}
+
+/* Tab sizing modes */
+.editor-tab.sizing-fit {
+	width: 120px;
+	min-width: fit-content;
+	flex-shrink: 0;
+}
+
+.editor-tab.sizing-shrink {
+	min-width: 80px;
+	flex-basis: 0;
+	flex-grow: 1;
+	max-width: fit-content;
+}
+
+.editor-tab.sizing-fixed {
+	min-width: var(--tab-sizing-fixed-min-width, 50px);
+	max-width: var(--tab-sizing-fixed-max-width, 160px);
+	flex: 1 0 0;
+}
+
+/* Sticky (pinned) tabs */
+.editor-tab.sticky {
+	position: sticky;
+	z-index: 8;
+	flex-basis: 0;
+	flex-grow: 0;
+}
+
+.editor-tab.sticky-compact {
+	width: 38px;
+	min-width: 38px;
+	max-width: 38px;
+	padding-left: 0;
+	justify-content: center;
+}
+
+.editor-tab.sticky-shrink {
+	width: 80px;
+	min-width: 80px;
+	max-width: 80px;
+}
+
+/* Last pinned tab border */
+.editor-tab.sticky.last-sticky {
+	border-right: 1px solid var(--tab-last-pinned-border);
+}
+
+/* Tab border top (for active/dirty) */
+.editor-tab-border-top {
+	display: none;
+	position: absolute;
+	top: 0;
+	left: 0;
+	right: 0;
+	height: 1px;
+	pointer-events: none;
+	z-index: 6;
+}
+
+.editor-tab.active .editor-tab-border-top,
+.editor-tab.selected .editor-tab-border-top {
+	display: block;
+	background-color: var(--tab-active-border-top);
+}
+
+.editor-tab.dirty .editor-tab-border-top {
+	display: block;
+	height: 2px;
+	background-color: var(--tab-active-modified-border);
+}
+
+.editor-tab.dirty:not(.active) .editor-tab-border-top {
+	background-color: var(--tab-inactive-modified-border);
+}
+
+/* Tab border bottom (for active) */
+.editor-tab-border-bottom {
+	display: none;
+	position: absolute;
+	bottom: 0;
+	left: 0;
+	right: 0;
+	height: 1px;
+	pointer-events: none;
+	z-index: 10;
+}
+
+.editor-tab.active .editor-tab-border-bottom {
+	display: block;
+	background-color: var(--tab-active-border);
+}
+
+/* Tab Icon */
+.editor-tab-icon {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 16px;
+	height: 16px;
+	margin-right: 6px;
+	flex-shrink: 0;
+}
+
+.editor-tab-icon img,
+.editor-tab-icon svg {
+	width: 16px;
+	height: 16px;
+}
+
+/* Tab Label */
+.editor-tab-label {
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	overflow: hidden;
+	flex: 1;
+	min-width: 0;
+}
+
+.editor-tab-name {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	font-size: 13px;
+	line-height: var(--editor-tab-height);
+}
+
+.editor-tab.preview .editor-tab-name {
+	font-style: italic;
+}
+
+.editor-tab-description {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	font-size: 11px;
+	opacity: 0.7;
+}
+
+/* Tab Label fade effect for shrink/fixed sizing */
+.editor-tab.sizing-shrink .editor-tab-label::after,
+.editor-tab.sizing-fixed .editor-tab-label::after {
+	content: '';
+	position: absolute;
+	right: 28px; /* Account for close button */
+	width: 20px;
+	height: calc(100% - 2px);
+	top: 1px;
+	background: linear-gradient(to right, transparent, var(--tab-inactive-background));
+	pointer-events: none;
+}
+
+.editor-tab.sizing-shrink.active .editor-tab-label::after,
+.editor-tab.sizing-fixed.active .editor-tab-label::after {
+	background: linear-gradient(to right, transparent, var(--tab-active-background));
+}
+
+/* Tab Actions (Close Button) */
+.editor-tab-actions {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 28px;
+	height: 100%;
+	flex-shrink: 0;
+}
+
+.editor-tab-close-button {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 20px;
+	height: 20px;
+	border: none;
+	background: transparent;
+	color: inherit;
+	cursor: pointer;
+	border-radius: 3px;
+	opacity: 0;
+	transition: opacity 0.1s;
+}
+
+.editor-tab:hover .editor-tab-close-button,
+.editor-tab.active .editor-tab-close-button,
+.editor-tab.dirty .editor-tab-close-button,
+.editor-tab-close-button:focus {
+	opacity: 1;
+}
+
+.editor-tab-close-button:hover {
+	background-color: rgba(255, 255, 255, 0.1);
+}
+
+.editor-tab-close-button svg {
+	width: 16px;
+	height: 16px;
+}
+
+/* Dirty indicator */
+.editor-tab.dirty:not(:hover) .editor-tab-close-button::before {
+	content: '';
+	display: block;
+	width: 8px;
+	height: 8px;
+	border-radius: 50%;
+	background-color: currentColor;
+}
+
+.editor-tab.dirty:not(:hover) .editor-tab-close-button svg {
+	display: none;
+}
+
+/* Pinned indicator */
+.editor-tab.sticky:not(.sticky-compact) .editor-tab-close-button::before {
+	content: '';
+	display: none;
+}
+
+/* Close button position: left */
+.editor-tab.close-left {
+	flex-direction: row-reverse;
+	padding-left: 0;
+	padding-right: 10px;
+}
+
+.editor-tab.close-left .editor-tab-actions {
+	margin-right: 4px;
+}
+
+/* Close button: off */
+.editor-tab.close-off .editor-tab-actions {
+	display: none;
+}
+
+.editor-tab.close-off {
+	padding-right: 10px;
+}
+
+/* Sticky compact - hide close button */
+.editor-tab.sticky-compact .editor-tab-actions {
+	display: none;
+}
+
+/* Drag and Drop */
+.editor-tab.dragging {
+	opacity: 0.5;
+}
+
+.editor-tab.drop-target-left::after {
+	content: '';
+	position: absolute;
+	right: -1px;
+	top: 0;
+	height: 100%;
+	width: 2px;
+	background-color: var(--tab-drag-and-drop-border);
+	pointer-events: none;
+	z-index: 11;
+}
+
+.editor-tab.drop-target-right::before {
+	content: '';
+	position: absolute;
+	left: 0;
+	top: 0;
+	height: 100%;
+	width: 2px;
+	background-color: var(--tab-drag-and-drop-border);
+	pointer-events: none;
+	z-index: 11;
+}
+
+/* Drop target on container (for dropping at end) */
+.editor-tabs-container.drop-target::after {
+	content: '';
+	position: absolute;
+	right: 0;
+	top: 0;
+	height: 100%;
+	width: 2px;
+	background-color: var(--tab-drag-and-drop-border);
+	pointer-events: none;
+	z-index: 11;
+}
+
+/* Editor Actions Toolbar */
+.editor-tabs-actions {
+	display: flex;
+	align-items: center;
+	padding: 0 8px 0 4px;
+	height: var(--editor-tab-height);
+	flex-shrink: 0;
+}
+
+.editor-tabs-actions.hidden {
+	display: none;
+}
+
+/* Wrapping mode adjustments */
+.editor-tabs.wrapping .editor-tabs-actions {
+	position: absolute;
+	bottom: 0;
+	right: 0;
+}
+
+.editor-tabs.wrapping .editor-tab:last-child {
+	margin-right: var(--last-tab-margin-right, 100px);
+}
+
+/* Two tab bars mode (pinned on separate row) */
+.editor-tabs-wrapper.two-rows {
+	display: flex;
+	flex-direction: column;
+}
+
+.editor-tabs-wrapper.two-rows .editor-tabs {
+	height: auto;
+}
+
+.editor-tabs-wrapper.two-rows .editor-tabs-container {
+	flex-wrap: nowrap;
+}
+
+/* Accessibility */
+.editor-tab[aria-selected="true"] {
+	/* Visual indicator handled by .active class */
+}
+
+/* High Contrast Mode */
+@media (forced-colors: active) {
+	.editor-tab {
+		border: 1px solid transparent;
+	}
+
+	.editor-tab.active {
+		border-color: Highlight;
+	}
+
+	.editor-tab:focus {
+		outline: 2px solid Highlight;
+	}
+
+	.editor-tab-close-button:focus {
+		outline: 1px solid Highlight;
+	}
+}
+
+/* Reduced Motion */
+@media (prefers-reduced-motion: reduce) {
+	.editor-tab-close-button {
+		transition: none;
+	}
+}
